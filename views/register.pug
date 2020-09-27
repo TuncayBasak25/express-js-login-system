@@ -1,0 +1,11 @@
+extends layout
+
+block content
+  form(id="register", action="/register", method="POST")
+
+  div(class="d-flex justify-content-center align-items-center" style="height: 100vh")
+    div(class="w-25")
+      input(type="text", form="register", name="username", placeholder="Username", class="form-control")
+      input(type="password" form="register", name="password", placeholder="Password", class="form-control")
+      button(type="submit", form="register", class="form-control btn btn-lg btn-primary") Signup
+    
