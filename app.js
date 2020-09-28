@@ -5,9 +5,53 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
+var loginRouter = require('./routes/login');
+var registerRouter = require('./routes/register');
+var logoutRouter = require('./routes/logout');
 var usersRouter = require('./routes/users');
 
+var Sequelize = require('sequelize');
+
 var app = express();
+
+app.use(express.static(path.join(__dirname, 'public')));
+//SESSIONS
+var session = require('express-session');
+
+app.set('trust proxy', 1) // trust first proxy
+app.use(session({
+  secret: 'keyboard cat',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false }
+}))
+
+var sess = {
+  secret: 'keyboard cat',
+  cookie: {}
+}
+
+if (app.get('env') === 'production') {
+  app.set('trust proxy', 1) // trust first proxy
+  sess.cookie.secure = false // serve secure cookies
+}
+
+app.use(session(sess));
+
+app.use(session({
+  genid: function(req) {
+    return genuuid() // use UUIDs for session IDs
+  },
+  secret: 'keyboard cat'
+}))
+//////////
+
+//BDD simulation
+app.user = null;
+
+app.usernameList = [];
+app.passwordList = [];
+/////
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -20,6 +64,9 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
+app.use('/login', indexRouter);
+app.use('/register', indexRouter);
+app.use('/logout', indexRouter);
 app.use('/users', usersRouter);
 
 // catch 404 and forward to error handler
