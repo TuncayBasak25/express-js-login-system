@@ -1,10 +1,18 @@
 var express = require('express');
 var router = express.Router();
 
+var Joi = require('joi');
+
 let user = null;
 
 let usernameList = [];
 let passwordList = [];
+
+
+let userSchema = Joi.object( {
+  username: Joi.string().min(3).max(8).required(),
+  password: Joi.string().min(4).max(6).required()
+});
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -37,10 +45,17 @@ router.post('/register', function(req, res, next) {
     res.redirect('/'); //If there is an user logged redirect to index
   }
 
+  const valid = userSchema.validate(req.body);
+
+  if (valid.error)
+  {
+    res.render('register', { error: valid.error.details[0].message });
+    return;
+  }
+
   if (usernameList.includes(req.body.username))
   {
-    console.log("This username is taken.");
-    res.render('register');
+    res.render('register', { error: "This username is taken.", lastUsername: req.body.username });
     return;
   }
 
@@ -67,17 +82,23 @@ router.post('/login', function(req, res, next) {
     res.redirect('/');
   }
 
+  const valid = userSchema.validate(req.body);
+
+  if (valid.error)
+  {
+    res.render('login', { error: valid.error.details[0].message });
+    return;
+  }
+
   if (!usernameList.includes(req.body.username))
   {
-    console.log("User don't exists.");
-    res.render('login');
+    res.render('login', { error: "User don't exists.", lastUsername: req.body.username });
     return;
   }
 
   if (passwordList[usernameList.indexOf(req.body.username)] !== req.body.password)
   {
-    console.log("password is wrong");
-    res.render('login');
+    res.render('login', { error: "Password is wrong.", lastUsername: req.body.username });
     return;
   }
 
