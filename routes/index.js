@@ -7,16 +7,21 @@ var db = require('../models/index');
 /* GET home page. */
 router.get('/', async function(req, res, next) {
 
-  const actualUser = await db.User.findOne({ where: {sessionId: req.session.id } });
+  try
+  {
+    const actualUser = await db.User.findOne({ where: {sessionId: req.session.id } });
 
-  if (req.session.username)
-  {
-    res.render('userhome', { user: req.session.username });
+    if (actualUser)
+    {
+      res.render('userhome', { user:actualUser.dataValues.username });
+    }
+    else
+    {
+      res.render('home', {title: 'Home'});
+    }
   }
-  else
-  {
-    req.session.username = "test";
-    res.render('home', {title: 'Home'});
+  catch (e) {
+    console.log(e);
   }
 });
 

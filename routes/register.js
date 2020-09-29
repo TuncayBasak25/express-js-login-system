@@ -1,6 +1,8 @@
 var express = require('express');
 var router = express.Router();
 
+var db = require('../models/index');
+
 var Joi = require('joi');
 
 let userSchema = Joi.object( {
@@ -8,44 +10,59 @@ let userSchema = Joi.object( {
   password: Joi.string().min(4).max(6).required()
 });
 
-/* GET register page. */
+/* Enter login page. */
+router.all('/', async function(req, res, next) {
+
+  try
+  {
+    const actualUser = await db.User.findOne({ where: {sessionId: req.session.id } });
+
+    if (actualUser)
+    {
+      res.redirect('/');
+    }
+
+    next();
+  }
+  catch (e) {
+    console.log(e);
+  }
+});
+
+/* GET login page. */
 router.get('/', function(req, res, next) {
-  if (app.user)
+  res.render('register');
+});
+
+/* POST login page. */
+router.post('/', async function(req, res, next) {
+  try
   {
-    res.redirect('/'); //If there is an user logged redirect to index
+    const valid = userSchema.validate(req.body);
+
+    if (valid.error)
+    {
+      res.render('register', { error: valid.error.details[0].message });
+      return;
+    }
+
+    const user = await db.User.findOne({ where: {username: req.body.username } });
+
+    if (user)
+    {
+      res.render('register', { error: "This username is already taken.", lastUsername: req.body.username });
+      return;
+    }
+
+    await db.User.create( {username: req.body.username, password: req.body.password} );
+
+    res.redirect('/login');
   }
-  else
-  {
-    res.render('register');
+  catch (e) {
+    console.log(e);
   }
 });
 
-/* POST register page. */
-router.post('/', function(req, res, next) {
-  if (app.user)
-  {
-    res.redirect('/'); //If there is an user logged redirect to index
-  }
-
-  const valid = userSchema.validate(req.body);
-
-  if (valid.error)
-  {
-    res.render('register', { error: valid.error.details[0].message });
-    return;
-  }
-
-  if (app.usernameList.includes(req.body.username))
-  {
-    res.render('register', { error: "This username is taken.", lastUsername: req.body.username });
-    return;
-  }
-
-  app.usernameList.push(req.body.username);
-  app.passwordList.push(req.body.password);
-
-  res.redirect('/login');
-});
 
 
 
