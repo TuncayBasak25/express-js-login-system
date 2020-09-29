@@ -4,11 +4,38 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
+var fs = require('fs');
+
 var indexRouter = require('./routes/index');
-var loginRouter = require('./routes/login');
-var registerRouter = require('./routes/register');
-var logoutRouter = require('./routes/logout');
-var usersRouter = require('./routes/users');
+// var loginRouter = require('./routes/login');
+// var registerRouter = require('./routes/register');
+// var logoutRouter = require('./routes/logout');
+// var usersRouter = require('./routes/users');
+
+function autoRouter(directory)
+{
+  let fileList = fs.readdirSync(directory);
+  let routeList = [];
+  let nameList = [];
+
+  for (var i = 0; i < fileList.length; i++) {
+    let file = fileList[i];
+
+    let explode = file.split('.');
+    explode.pop();
+    file = explode.join('');
+    routeList.push(require(directory + '/' + file));
+    nameList.push(file);
+  }
+
+  return [routeList, nameList];
+}
+
+let cache = autoRouter('./routes');
+
+let routeList = cache[0];
+let fileList = cache[1];
+////////////////////////////
 
 var Sequelize = require('sequelize');
 
@@ -64,10 +91,15 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-app.use('/login', loginRouter);
-app.use('/register', registerRouter);
-app.use('/logout', logoutRouter);
-app.use('/users', usersRouter);
+// app.use('/login', loginRouter);
+// app.use('/register', registerRouter);
+// app.use('/logout', logoutRouter);
+// app.use('/users', usersRouter);
+
+routeList.forEach((router, i) => {console.log(routeList.length);
+  app.use('/' + fileList[i], router);
+});
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
